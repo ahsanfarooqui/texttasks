@@ -98,6 +98,3 @@ if st.session_state.history:
     latest_response = st.session_state.history[-1]['response']
     st.subheader("Latest Response")
     st.write(latest_response)
-
-# Footer with Groq API mention
-st.sidebar.write("Powered by Groq and LLaMA")
