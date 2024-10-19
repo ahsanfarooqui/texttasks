@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from groq import Groq  # Assuming this is the correct import based on your setup
+from groq import Groq  # Assuming this is the correct import for the Groq client
 
 # Initialize Groq Client using the API key from environment variables
 client = Groq(
@@ -8,32 +8,34 @@ client = Groq(
 )
 
 # Function to query the LLaMA model using Groq's chat completion
-def query_llama(prompt, temperature, max_length, top_k, top_p):
+def query_llama(messages, temperature, max_tokens, top_p, frequency_penalty, presence_penalty):
     try:
         # Using client to generate chat completion with Groq API
         response = client.chat.completions.create(
-            model="llama",  # Adjust based on the actual Groq model name
-            prompt=prompt,
+            model="llama",  # Adjust to the correct model name if needed
+            messages=messages,
             temperature=temperature,
-            max_tokens=max_length,
-            top_k=top_k,
-            top_p=top_p
+            max_tokens=max_tokens,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty
         )
         
-        # Assuming the API returns text in a 'text' field
-        return response['choices'][0]['text']  # Modify as per actual response structure
+        # Assuming the API returns text in a 'choices' list with 'text' field
+        return response['choices'][0]['text']  # Adjust as per the actual response structure
     except Exception as e:
         st.error(f"Error querying Groq model: {e}")
         return None
 
 # Sidebar for model parameter controls
 st.sidebar.title("Model Parameters")
-temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.7)
-max_length = st.sidebar.slider("Max Length", 50, 500, 100)
-top_k = st.sidebar.slider("Top-k", 1, 100, 50)
+temperature = st.sidebar.slider("Temperature", 0.0, 2.0, 1.0)
+max_tokens = st.sidebar.slider("Max Tokens", 50, 500, 150)
 top_p = st.sidebar.slider("Top-p", 0.0, 1.0, 0.95)
+frequency_penalty = st.sidebar.slider("Frequency Penalty", -2.0, 2.0, 0.0)
+presence_penalty = st.sidebar.slider("Presence Penalty", -2.0, 2.0, 0.0)
 
-# Initialize session state for history and memory
+# Initialize session state for chat history
 if 'history' not in st.session_state:
     st.session_state.history = []
 
@@ -61,7 +63,19 @@ prompt = st.text_area("Enter your prompt")
 if st.button("Submit"):
     if prompt:
         task_prompt = get_task_prompt(task, prompt)
-        response = query_llama(task_prompt, temperature, max_length, top_k, top_p)
+
+        # Add the task prompt as a message in the conversation
+        messages = [{"role": "user", "content": task_prompt}]
+        
+        response = query_llama(
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty
+        )
+        
         if response:
             st.session_state.history.append({
                 "task": task,
