@@ -1,69 +1,72 @@
+Here is an example code for the Streamlit app that meets your requirements:
+```
 import streamlit as st
-import groq
-from transformers import LLaMAForConditionalGeneration, LLAMATokenizer
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from groq import GroqClient
+import os
 
-# Load the model and tokenizer
-tokenizer = LLAMATokenizer.from_pretrained("llama-base")
-model = LLaMAForConditionalGeneration.from_pretrained("llama-base")
+# Set up the Groq client
+groq_client = GroqClient(
+    api_key="YOUR_API_KEY",
+    model_name="llama",
+    model_version="main",
+    logging=True,
+    temperature=0.5,  # default temperature
+    max_length=2048,  # default max length
+    top_p=0.9,  # default top-p
+    frequency_penalty=0.5,  # default frequency penalty
+    presence_penalty=0.5,  # default presence penalty
+)
 
-# Initialize the model client using GROQ API client
-groq_key = st.secrets["GROQ_API_KEY"]
-client = groq.Client(key=groq_key)
+# Set up the Streamlit app
+st.set_page_title("Llama Model App")
+st.markdown("# Llama Model App")
 
-# Function to generate text from the prompt
-def generate_text(prompt, temperature=0.9, max_length=256):
-    inputs = tokenizer.encode(prompt, return_tensors="pt")
-    outputs = model.generate(inputs=inputs, max_length=max_length, temperature=temperature, early_stopping=True)
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+# Create a text input for prompts
+prompt_text = st.text_area("Enter a prompt:", height=200)
 
-# Main function
-if __name__ == "__main__":
-    st.title("LLaMA Text Generation App")
+# Create a dropdown menu for tasks
+tasks = ["Text Summarization", "Draft Letter/Email", "Create Meeting Minutes"]
+task = st.selectbox("Choose a task:", tasks)
 
-    # Choose the task for this text generation
-    task = st.selectbox("Choose the task", ["Summarization", "Drafting a letter", "Creating meeting minutes"])
+# Create a button to generate text
+generate_button = st.button("Generate Text")
 
-    # Define the prompts based on the task chosen
-    if task == "Summarization":
-        prompt = "Please summarize this article..."
-    elif task == "Drafting a letter":
-        prompt = "Please draft a letter to..."
-    elif task == "Creating meeting minutes":
-        prompt = "Please create meeting minutes for..."
+# Create a button to clear memory
+clear_button = st.button("Clear Memory")
 
-    # Get the user input for the prompt
-    user_input = st.text_input("Please provide the prompt")
+# Create a checkbox for controlling temperature
+temperature_control = st.checkbox("Adjust Temperature?", value=True)
+temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=groq_client.temperature)
 
-    # Combine the prompt and user input
-    prompt = prompt + user_input
+# Create a slider for controlling top-p
+top_p_slider = st.slider("Top-P", min_value=0.0, max_value=1.0, value=groq_client.top_p)
 
-    # Get the temperature value from the user
-    temperature = st.slider("Temperature", 0.0, 1.0)
+# Create a slider for controlling frequency penalty
+frequency_penalty_slider = st.slider("Frequency Penalty", min_value=0.0, max_value=1.0, value=groq_client.frequency_penalty)
 
-    # Get the maximum length of the generated text
-    max_length = st.slider("Maximum Length", 100, 256)
+# Create a slider for controlling presence penalty
+presence_penalty_slider = st.slider("Presence Penalty", min_value=0.0, max_value=1.0, value=groq_client.presence_penalty)
 
-    # Generate the text
-    generated_text = generate_text(prompt, temperature, max_length)
+# Define a function to generate text
+def generate_text(prompt, temperature = 0.9, top_p_slider = 1.0, frequency_penalty_slider =1.0, presence_penalty_slider=1.0):
+    response = groq_client.compute(prompt, max_length=2048, temperature=temperature, top_p=top_p_slider, frequency_penalty=frequency_penalty_slider, presence_penalty=presence_penalty_slider)
+    return response
 
-    # Display the generated text
-    st.write(f"Generated Text: {generated_text}")
+# Define a function to clear memory
+def clear_memory():
+    groq_client.clear_memory()
 
-    # Load the interaction history
-    interaction_history = st.experimental_get_query_params()
+# Render the app
+if generate_button:
+    if task == "Text Summarization":
+        st.markdown("### Text Summarization")
+        st.write(generate_text(prompt_text),temperature, top_p_slider , frequency_penalty_slider, presence_penalty_slider)
+    elif task == "Draft Letter/Email":
+        st.markdown("### Draft Letter/Email")
+        st.write(generate_text(prompt_text),temperature, top_p_slider , frequency_penalty_slider, presence_penalty_slider))
+    elif task == "Create Meeting Minutes":
+        st.markdown("### Create Meeting Minutes")
+        st.write(generate_text(prompt_text),temperature, top_p_slider , frequency_penalty_slider, presence_penalty_slider))
 
-    # Display the interaction history
-    st.write("Interaction History:")
-    for key, value in interaction_history.items():
-        st.write(f"{key}: {value}")
-
-    # Function to clear the memory
-    def clear_memory():
-        interaction_history = {}
-        st.experimental_set_query_params(interaction_history)
-
-    # Create a button to clear the memory
-    clear_button = st.button("Clear Memory")
-    if clear_button:
-        st.experimental_set_query_params(interaction_history={})
+if clear_button:
+    clear_memory()
