@@ -84,6 +84,12 @@ if st.button("Submit"):
                 "response": response
             })
 
+# Display only the latest response at the bottom
+if st.session_state.history:
+    latest_response = st.session_state.history[-1]['response']
+    st.subheader("Latest Response")
+    st.write(latest_response)
+
 # Collapsible history section on the right side of the main interface
 with st.expander("📜 Show Chat History", expanded=False):
     st.write("Chat History:")
@@ -93,8 +99,4 @@ with st.expander("📜 Show Chat History", expanded=False):
         st.write(f"**Response:** {entry['response']}")
         st.write("---")
 
-# Display only the latest response at the bottom
-if st.session_state.history:
-    latest_response = st.session_state.history[-1]['response']
-    st.subheader("Latest Response")
-    st.write(latest_response)
+
