@@ -1,40 +1,47 @@
 import streamlit as st
 import os
-import groq  # Assuming groq library supports LLaMA model usage
+import requests
 
 # Fetch API key from environment variables
 GROQ_API_KEY = os.getenv("GROQ_API")
 
-# Initialize Groq Client
-@st.cache_resource
-def initialize_groq_client():
-    if GROQ_API_KEY:
-        client = groq.Client(api_key=GROQ_API_KEY)
-        return client
-    else:
-        st.error("Groq API key not found. Please set 'GROQ_API_KEY' as an environment variable.")
-        st.stop()
+# Initialize Groq Client or setup API URL
+GROQ_API_URL = "https://api.groq.com/v1/models/generate"  # Placeholder API URL, adjust as per the actual API endpoint
 
-client = initialize_groq_client()
+# Check if API key exists
+if not GROQ_API_KEY:
+    st.error("Groq API key not found. Please set 'GROQ_API_KEY' as an environment variable.")
+    st.stop()
 
-# Define a function to query the LLaMA model using Groq's API
+# Function to query the LLaMA model using Groq's API via HTTP request
 def query_llama(prompt, temperature, max_length, top_k, top_p):
     try:
-        # Example of how the query might work - update based on actual Groq API
-        response = client.model.generate(
-            model="llama", 
-            prompt=prompt,
-            temperature=temperature,
-            max_length=max_length,
-            top_k=top_k,
-            top_p=top_p
-        )
-        return response.get("generated_text", "")
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": "llama",  # Change based on the actual model parameter name in Groq API
+            "prompt": prompt,
+            "temperature": temperature,
+            "max_tokens": max_length,
+            "top_k": top_k,
+            "top_p": top_p
+        }
+        
+        response = requests.post(GROQ_API_URL, json=payload, headers=headers)
+
+        if response.status_code == 200:
+            return response.json().get("generated_text", "")
+        else:
+            st.error(f"Groq API request failed: {response.status_code} - {response.text}")
+            return None
     except Exception as e:
         st.error(f"Error querying Groq model: {e}")
         return None
 
-# Sidebar settings for the model parameters
+# Sidebar for model parameter controls
 st.sidebar.title("Model Parameters")
 temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.7)
 max_length = st.sidebar.slider("Max Length", 50, 500, 100)
@@ -45,7 +52,7 @@ top_p = st.sidebar.slider("Top-p", 0.0, 1.0, 0.95)
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# Function to handle task-specific prompts
+# Function to handle different tasks (summarization, drafting, meeting minutes)
 def get_task_prompt(task, user_input):
     if task == "Summarize Text":
         return f"Summarize the following text:\n{user_input}"
@@ -56,16 +63,16 @@ def get_task_prompt(task, user_input):
     else:
         return user_input
 
-# Clear chat and memory
+# Clear chat and memory button
 if st.sidebar.button("Clear Chat"):
     st.session_state.history = []
 
-# UI for main input and task selection
+# Main UI elements for text input and task selection
 st.title("Groq-powered LLaMA Text Utility App")
 task = st.selectbox("Select Task", ["Summarize Text", "Draft a Letter", "Meeting Minutes"])
 prompt = st.text_area("Enter your prompt")
 
-# Button to submit the prompt
+# Button to submit the prompt to Groq's LLaMA model
 if st.button("Submit"):
     if prompt:
         task_prompt = get_task_prompt(task, prompt)
@@ -85,5 +92,5 @@ for idx, entry in enumerate(st.session_state.history):
     st.write(f"**Response:** {entry['response']}")
     st.write("---")
 
-# Footer displaying Groq information
+# Footer with Groq API mention
 st.sidebar.write("Powered by Groq and LLaMA")
