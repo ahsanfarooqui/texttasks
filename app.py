@@ -28,7 +28,7 @@ def query_llama(messages, temperature, max_tokens, top_p, frequency_penalty, pre
         st.error(f"Error querying Groq model: {e}")
         return None
 
-# Sidebar for model parameter controls
+# Sidebar for model parameter controls (LEFT SIDEBAR)
 st.sidebar.title("Model Parameters")
 temperature = st.sidebar.slider("Temperature", 0.0, 2.0, 1.0)
 max_tokens = st.sidebar.slider("Max Tokens", 50, 500, 150)
@@ -84,8 +84,8 @@ if st.button("Submit"):
                 "response": response
             })
 
-# Collapsible history section with icon on the left
-with st.sidebar.expander("📜 Show Chat History", expanded=False):
+# Collapsible history section on the right side of the main interface
+with st.expander("📜 Show Chat History", expanded=False):
     st.write("Chat History:")
     for idx, entry in enumerate(st.session_state.history):
         st.write(f"**Task {idx + 1}:** {entry['task']}")
