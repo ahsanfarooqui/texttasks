@@ -56,7 +56,7 @@ if st.sidebar.button("Clear Chat"):
     st.session_state.history = []
 
 # Main UI elements for text input and task selection
-st.title("Groq-powered LLaMA Text Utility App")
+st.title("Text Tasks Buddy")
 task = st.selectbox("Select Task", ["Summarize Text", "Draft a Letter", "Meeting Minutes"])
 prompt = st.text_area("Enter your prompt")
 
@@ -87,7 +87,7 @@ if st.button("Submit"):
 # Display only the latest response at the bottom
 if st.session_state.history:
     latest_response = st.session_state.history[-1]['response']
-    st.subheader("Latest Response")
+    st.subheader("Response")
     st.write(latest_response)
 
 # Collapsible history section on the right side of the main interface
