@@ -1,42 +1,27 @@
 import streamlit as st
 import os
-import requests
+from groq import Groq  # Assuming this is the correct import based on your setup
 
-# Fetch API key from environment variables
-GROQ_API_KEY = os.getenv("GROQ_API")
+# Initialize Groq Client using the API key from environment variables
+client = Groq(
+    api_key=os.environ.get("GROQ_API_KEY")
+)
 
-# Initialize Groq Client or setup API URL
-GROQ_API_URL = "https://api.groq.com/v1/models/generate"  # Placeholder API URL, adjust as per the actual API endpoint
-
-# Check if API key exists
-if not GROQ_API_KEY:
-    st.error("Groq API key not found. Please set 'GROQ_API_KEY' as an environment variable.")
-    st.stop()
-
-# Function to query the LLaMA model using Groq's API via HTTP request
+# Function to query the LLaMA model using Groq's chat completion
 def query_llama(prompt, temperature, max_length, top_k, top_p):
     try:
-        headers = {
-            "Authorization": f"Bearer {GROQ_API_KEY}",
-            "Content-Type": "application/json"
-        }
+        # Using client to generate chat completion with Groq API
+        response = client.chat.completions.create(
+            model="llama",  # Adjust based on the actual Groq model name
+            prompt=prompt,
+            temperature=temperature,
+            max_tokens=max_length,
+            top_k=top_k,
+            top_p=top_p
+        )
         
-        payload = {
-            "model": "llama",  # Change based on the actual model parameter name in Groq API
-            "prompt": prompt,
-            "temperature": temperature,
-            "max_tokens": max_length,
-            "top_k": top_k,
-            "top_p": top_p
-        }
-        
-        response = requests.post(GROQ_API_URL, json=payload, headers=headers)
-
-        if response.status_code == 200:
-            return response.json().get("generated_text", "")
-        else:
-            st.error(f"Groq API request failed: {response.status_code} - {response.text}")
-            return None
+        # Assuming the API returns text in a 'text' field
+        return response['choices'][0]['text']  # Modify as per actual response structure
     except Exception as e:
         st.error(f"Error querying Groq model: {e}")
         return None
