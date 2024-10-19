@@ -1,72 +1,89 @@
 import streamlit as st
-from groq import Groq
 import os
+import groq  # Assuming groq library supports LLaMA model usage
 
-key = os.getenv("GROQ_API")  # Get the Groq API key from environment variables
+# Fetch API key from environment variables
+GROQ_API_KEY = os.getenv("GROQ_API")
 
-# Set up the Groq client
-groq_client = Groq(
-    api_key=key,
-    model_name="llama",
-    model_version="main",
-    logging=True,
-    temperature=0.5,  # default temperature
-    max_length=2048,  # default max length
-    top_p=0.9,  # default top-p
-    frequency_penalty=0.5,  # default frequency penalty
-    presence_penalty=0.5,  # default presence penalty
-)
+# Initialize Groq Client
+@st.cache_resource
+def initialize_groq_client():
+    if GROQ_API_KEY:
+        client = groq.Client(api_key=GROQ_API_KEY)
+        return client
+    else:
+        st.error("Groq API key not found. Please set 'GROQ_API_KEY' as an environment variable.")
+        st.stop()
 
-# Set up the Streamlit app
-st.set_page_title("Llama Model App")
-st.markdown("# Llama Model App")
+client = initialize_groq_client()
 
-# Create a text input for prompts
-prompt_text = st.text_area("Enter a prompt:", height=200)
+# Define a function to query the LLaMA model using Groq's API
+def query_llama(prompt, temperature, max_length, top_k, top_p):
+    try:
+        # Example of how the query might work - update based on actual Groq API
+        response = client.model.generate(
+            model="llama", 
+            prompt=prompt,
+            temperature=temperature,
+            max_length=max_length,
+            top_k=top_k,
+            top_p=top_p
+        )
+        return response.get("generated_text", "")
+    except Exception as e:
+        st.error(f"Error querying Groq model: {e}")
+        return None
 
-# Create a dropdown menu for tasks
-tasks = ["Text Summarization", "Draft Letter/Email", "Create Meeting Minutes"]
-task = st.selectbox("Choose a task:", tasks)
+# Sidebar settings for the model parameters
+st.sidebar.title("Model Parameters")
+temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.7)
+max_length = st.sidebar.slider("Max Length", 50, 500, 100)
+top_k = st.sidebar.slider("Top-k", 1, 100, 50)
+top_p = st.sidebar.slider("Top-p", 0.0, 1.0, 0.95)
 
-# Create a button to generate text
-generate_button = st.button("Generate Text")
+# Initialize session state for history and memory
+if 'history' not in st.session_state:
+    st.session_state.history = []
 
-# Create a button to clear memory
-clear_button = st.button("Clear Memory")
+# Function to handle task-specific prompts
+def get_task_prompt(task, user_input):
+    if task == "Summarize Text":
+        return f"Summarize the following text:\n{user_input}"
+    elif task == "Draft a Letter":
+        return f"Draft a formal letter based on this input:\n{user_input}"
+    elif task == "Meeting Minutes":
+        return f"Create meeting minutes from the following discussion:\n{user_input}"
+    else:
+        return user_input
 
-# Create a checkbox for controlling temperature
-temperature_control = st.checkbox("Adjust Temperature?", value=True)
-temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=groq_client.temperature)
+# Clear chat and memory
+if st.sidebar.button("Clear Chat"):
+    st.session_state.history = []
 
-# Create a slider for controlling top-p
-top_p_slider = st.slider("Top-P", min_value=0.0, max_value=1.0, value=groq_client.top_p)
+# UI for main input and task selection
+st.title("Groq-powered LLaMA Text Utility App")
+task = st.selectbox("Select Task", ["Summarize Text", "Draft a Letter", "Meeting Minutes"])
+prompt = st.text_area("Enter your prompt")
 
-# Create a slider for controlling frequency penalty
-frequency_penalty_slider = st.slider("Frequency Penalty", min_value=0.0, max_value=1.0, value=groq_client.frequency_penalty)
+# Button to submit the prompt
+if st.button("Submit"):
+    if prompt:
+        task_prompt = get_task_prompt(task, prompt)
+        response = query_llama(task_prompt, temperature, max_length, top_k, top_p)
+        if response:
+            st.session_state.history.append({
+                "task": task,
+                "prompt": prompt,
+                "response": response
+            })
 
-# Create a slider for controlling presence penalty
-presence_penalty_slider = st.slider("Presence Penalty", min_value=0.0, max_value=1.0, value=groq_client.presence_penalty)
+# Display chat history
+st.header("Chat History")
+for idx, entry in enumerate(st.session_state.history):
+    st.write(f"**Task {idx + 1}:** {entry['task']}")
+    st.write(f"**Prompt:** {entry['prompt']}")
+    st.write(f"**Response:** {entry['response']}")
+    st.write("---")
 
-# Define a function to generate text
-def generate_text(prompt, temperature = 0.9, top_p_slider = 1.0, frequency_penalty_slider =1.0, presence_penalty_slider=1.0):
-    response = groq_client.compute(prompt, max_length=2048, temperature=temperature, top_p=top_p_slider, frequency_penalty=frequency_penalty_slider, presence_penalty=presence_penalty_slider)
-    return response
-
-# Define a function to clear memory
-def clear_memory():
-    groq_client.clear_memory()
-
-# Render the app
-if generate_button:
-    if task == "Text Summarization":
-        st.markdown("### Text Summarization")
-        st.write(generate_text(prompt_text),temperature, top_p_slider , frequency_penalty_slider, presence_penalty_slider)
-    elif task == "Draft Letter/Email":
-        st.markdown("### Draft Letter/Email")
-        st.write(generate_text(prompt_text),temperature, top_p_slider , frequency_penalty_slider, presence_penalty_slider)
-    elif task == "Create Meeting Minutes":
-        st.markdown("### Create Meeting Minutes")
-        st.write(generate_text(prompt_text),temperature, top_p_slider , frequency_penalty_slider, presence_penalty_slider)
-
-if clear_button:
-    clear_memory()
+# Footer displaying Groq information
+st.sidebar.write("Powered by Groq and LLaMA")
