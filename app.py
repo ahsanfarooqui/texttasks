@@ -20,7 +20,7 @@ def query_llama(messages, temperature, max_tokens, top_p, frequency_penalty, pre
             frequency_penalty=frequency_penalty,
             presence_penalty=presence_penalty
         )
-        st.write(response)
+        
         # Parse the response to extract the content of the assistant's reply
         content = response.choices[0].message.content
         return content
@@ -84,13 +84,20 @@ if st.button("Submit"):
                 "response": response
             })
 
-# Display chat history
-st.header("Chat History")
-for idx, entry in enumerate(st.session_state.history):
-    st.write(f"**Task {idx + 1}:** {entry['task']}")
-    st.write(f"**Prompt:** {entry['prompt']}")
-    st.write(f"**Response:** {entry['response']}")
-    st.write("---")
+# Collapsible history section with icon on the left
+with st.sidebar.expander("📜 Show Chat History", expanded=False):
+    st.write("Chat History:")
+    for idx, entry in enumerate(st.session_state.history):
+        st.write(f"**Task {idx + 1}:** {entry['task']}")
+        st.write(f"**Prompt:** {entry['prompt']}")
+        st.write(f"**Response:** {entry['response']}")
+        st.write("---")
+
+# Display only the latest response at the bottom
+if st.session_state.history:
+    latest_response = st.session_state.history[-1]['response']
+    st.subheader("Latest Response")
+    st.write(latest_response)
 
 # Footer with Groq API mention
 st.sidebar.write("Powered by Groq and LLaMA")
