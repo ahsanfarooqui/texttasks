@@ -4,7 +4,7 @@ from groq import Groq  # Assuming this is the correct import based on your setup
 
 # Initialize Groq Client using the API key from environment variables
 client = Groq(
-    api_key=os.environ.get("GROQ_API_KEY")
+    api_key=os.environ.get("GROQ_API")
 )
 
 # Function to query the LLaMA model using Groq's chat completion
