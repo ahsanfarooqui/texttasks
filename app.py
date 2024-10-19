@@ -1,12 +1,12 @@
-Here is an example code for the Streamlit app that meets your requirements:
-```
 import streamlit as st
 from groq import GroqClient
 import os
 
+key = os.getenv("GROQ_API")  # Get the Groq API key from environment variables
+
 # Set up the Groq client
 groq_client = GroqClient(
-    api_key="YOUR_API_KEY",
+    api_key=key,
     model_name="llama",
     model_version="main",
     logging=True,
@@ -63,10 +63,10 @@ if generate_button:
         st.write(generate_text(prompt_text),temperature, top_p_slider , frequency_penalty_slider, presence_penalty_slider)
     elif task == "Draft Letter/Email":
         st.markdown("### Draft Letter/Email")
-        st.write(generate_text(prompt_text),temperature, top_p_slider , frequency_penalty_slider, presence_penalty_slider))
+        st.write(generate_text(prompt_text),temperature, top_p_slider , frequency_penalty_slider, presence_penalty_slider)
     elif task == "Create Meeting Minutes":
         st.markdown("### Create Meeting Minutes")
-        st.write(generate_text(prompt_text),temperature, top_p_slider , frequency_penalty_slider, presence_penalty_slider))
+        st.write(generate_text(prompt_text),temperature, top_p_slider , frequency_penalty_slider, presence_penalty_slider)
 
 if clear_button:
     clear_memory()
