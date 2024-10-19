@@ -20,9 +20,9 @@ def query_llama(messages, temperature, max_tokens, top_p, frequency_penalty, pre
             frequency_penalty=frequency_penalty,
             presence_penalty=presence_penalty
         )
-        
+        st.write(response)
         # Parse the response to extract the content of the assistant's reply
-        content = response['choices'][0].message.content
+        content = response['choices'][0]
         return content
     except Exception as e:
         st.error(f"Error querying Groq model: {e}")
