@@ -1,11 +1,11 @@
 import streamlit as st
-from groq import GroqClient
+from groq import Groq
 import os
 
 key = os.getenv("GROQ_API")  # Get the Groq API key from environment variables
 
 # Set up the Groq client
-groq_client = GroqClient(
+groq_client = Groq(
     api_key=key,
     model_name="llama",
     model_version="main",
