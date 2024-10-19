@@ -24,7 +24,7 @@ def query_llama(messages, temperature, max_tokens, top_p, frequency_penalty, pre
         st.write(response)
         
         # Assuming the API returns text in a 'choices' list with 'text' field
-        return response['choices'][0]['text']  # Adjust as per the actual response structure
+        return response['choices'][0]['message']  # Adjust as per the actual response structure
     except Exception as e:
         st.error(f"Error querying Groq model: {e}")
         return None
