@@ -12,7 +12,7 @@ def query_llama(messages, temperature, max_tokens, top_p, frequency_penalty, pre
     try:
         # Using client to generate chat completion with Groq API
         response = client.chat.completions.create(
-            model="llama",  # Adjust to the correct model name if needed
+            model="llama3-8b-8192",  # Adjust to the correct model name if needed
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
